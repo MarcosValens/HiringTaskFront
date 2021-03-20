@@ -10,6 +10,7 @@
           transition-hide="flip-down"
           :options="options"
           label="Area"
+          @input="createMarker"
         />
       </div>
     </div>
@@ -107,11 +108,10 @@ export default {
       ],
       model: "Todos",
       data: [],
+      coords: [],
+      markers: [],
+      selectMarckers: [],
       filterData: [],
-      barcelona: [],
-      madrid: [],
-      costaBlanca: [],
-      costaSol: [],
       addresses: [],
       columns: [
         {
@@ -190,15 +190,7 @@ export default {
     async getData() {
       const hotels = await get.getData();
       this.data = hotels.data;
-      hotels.data.forEach(hotel => {
-        this.addresses.push(hotel.hotel_address);
-      });
-      let marks = await get.getCoords();
-      marks.data.features.forEach(data => {
-        let lng = data.geometry.coordinates[0];
-        let lat = data.geometry.coordinates[1];
-        this.createMarker(lng, lat);
-      });
+      this.coords = await get.getCoords();
     },
     createMap: function() {
       mapboxgl.accessToken = MAP_BOX_KEY;
@@ -209,8 +201,39 @@ export default {
         zoom: 5
       });
     },
-    createMarker: function(lng, ltd) {
-      new mapboxgl.Marker().setLngLat([lng, ltd]).addTo(this.map);
+    createMarker: function() {
+      this.markers.forEach(mark => mark.remove());
+      this.markers = [];
+      this.coords.data.features.forEach(data => {
+        if (data.properties.country_area == this.model) {
+          let lng = data.geometry.coordinates[0];
+          let ltd = data.geometry.coordinates[1];
+          this.markers.push(
+            new mapboxgl.Marker()
+              .setLngLat([lng, ltd])
+              .setPopup(
+                new mapboxgl.Popup({ offset: 25 }).setHTML(
+                  "<h3>" + data.properties.country_area + "</h3>"
+                )
+              )
+              .addTo(this.map)
+          );
+        }
+        if (this.model == "Todos") {
+          let lng = data.geometry.coordinates[0];
+          let ltd = data.geometry.coordinates[1];
+          this.markers.push(
+            new mapboxgl.Marker()
+              .setLngLat([lng, ltd])
+              .setPopup(
+                new mapboxgl.Popup({ offset: 25 }).setHTML(
+                  "<h3>" + data.properties.country_area + "</h3>"
+                )
+              )
+              .addTo(this.map)
+          );
+        }
+      });
     }
   },
   computed: {
